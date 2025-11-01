@@ -6,10 +6,10 @@
 
 /*This is the definiton for each task to identify info about them*/
 struct Task{
-    int taskID;
-    int burstTime;
-    int priority;
-    int arrivalTime;
+    int taskID; //The first number
+    int burstTime; //the second number
+    int priority; //the third number
+    int arrivalTime; //used for Preemptive Priority Scheduling later
 };
 
 
@@ -32,8 +32,8 @@ void readFile(const char *filename) {
     // Reading from file using while loop gathering info for each task and storing it in array of Tasks
     while(fscanf(fp, "%d %d %d", 
         &tasks[numOfTasks].taskID, 
-        &tasks[numOfTasks].burstTime, 
-        &tasks[numOfTasks].priority) == 3) {
+        &tasks[numOfTasks].priority,
+        &tasks[numOfTasks].burstTime ) == 3) {
         tasks[numOfTasks].arrivalTime = 0; // Initializing arrival time to 0
         numOfTasks++;
     }
@@ -41,20 +41,23 @@ void readFile(const char *filename) {
 }
 
 int main() {
-    readFile("tasks.txt"); //Reading for our input file
+    readFile("input.txt"); //Reading for our input file
 
-    //Declaring and creating the threads for each scheduling algorithm
+    //Creating the threads and attributes for scheduling algorithms
     pthread_t t1, t2, t3;
     pthread_attr_t attr;
+
+    //Initializing thread attributes
     pthread_attr_init(&attr);
 
+    //Creating the threads and making them wait for each other to finish
     pthread_create(&t1, &attr, fcfs, NULL);
-    pthread_create(&t2, &attr, sjf, NULL);
-    pthread_create(&t3, &attr, priority_Scheduling, NULL);
-
-    //Making sure it waits for all threads to complete
     pthread_join(t1, NULL);
+
+    pthread_create(&t2, &attr, sjf, NULL);
     pthread_join(t2, NULL);
+
+    pthread_create(&t3, &attr, priority_Scheduling, NULL);
     pthread_join(t3, NULL);
 
     return 0;
@@ -151,6 +154,7 @@ void *sjf(void *param) {
     //Calculating average waiting time/turnaround time and rounding
     printf("Average Waiting Time: %.2f\n", (float)totalWaiting/numOfTasks);
     printf("Average Turnaround Time: %.2f\n", (float)TotalTurnaroundTime/numOfTasks);
+    printf("\n");
 
     pthread_exit(0);
 }
@@ -171,11 +175,14 @@ void *priority_Scheduling(void *param) {
     int completedTasks = 0;
     int currentTime = 0; 
 
+
+
     srand(time(NULL)); // Makes sure random numbers are random each time
 
     for(int i=0; i<numOfTasks; i++) {
         tasks[i].arrivalTime = rand() % 101; // Random arrival time assignments between 0 and 100 ms
         remainingBurst[i] = tasks[i].burstTime; // Copying the bursts times for computations
+    
     }
 
 
@@ -188,11 +195,10 @@ void *priority_Scheduling(void *param) {
     printf("\n--- Priority Scheduling ---\n");
     printf("Gantt Chart: ");
 
-
     //Running till all tasks are completed
     while(completedTasks < numOfTasks) {
         int current = -1; //The task we are on
-        int highestPriority = 100; //Used to track which task has highest priority, lower number = highest 
+        int highestPriority = 200; //Used to track current highest priority, lower number = highest 
 
         //Finding the task with the highest priority that has arrived
         for(int i=0; i<numOfTasks; i++) {
@@ -208,27 +214,34 @@ void *priority_Scheduling(void *param) {
         
         //If we have a current task to execute
         if(current != -1) {
-            //Executing the selected task
-            printf("[T%d]", tasks[current].taskID);
-            //Executing task for one time unit 
+            //Increase the waitinf time for the other tasks curerently arrived
+           for(int i=0; i<numOfTasks; i++) {
+                if(i != current && tasks[i].arrivalTime <= currentTime && !isCompleted[i]) {
+                    waitingTime[i]++;
+                }
+            }
+
+            //Printing the Gantt Chart entry for the current task
+           printf("[T%d]", tasks[current].taskID);
+           
+            
+            //Executing one time unit
             remainingBurst[current]--; 
             currentTime++;
+        
 
             //If task is finished
             if(remainingBurst[current]==0) {
                 isCompleted[current] = 1; //completed
-                completedTasks++;
-                int finishTime = currentTime; //storing finish time
-
-                //calculations
-                turnaroundTime[current] = finishTime - tasks[current].arrivalTime;
-                waitingTime[current] = turnaroundTime[current] - tasks[current].burstTime;
+                completedTasks++; //completed counter
+                turnaroundTime[current] = currentTime - tasks[current].arrivalTime;
+                
                 totalWaiting += waitingTime[current];
                 TotalTurnaroundTime += turnaroundTime[current];
             }
-        //If no current task to execute go on
+        //If no current task  eady, go on
         }  else {
-                currentTime++; //If no task is ready, increment time
+                currentTime++; 
             }
     }
 
