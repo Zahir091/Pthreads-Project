@@ -17,7 +17,7 @@ struct Task tasks[5]; // Array to hold tasks, 5 maximum
 int numOfTasks = 0; // Number of tasks counter
 
 /* Function declartion for scheduling algorithms */
-void *fcfs(void, *param); 
+void *fcfs(void *param); 
 void *sjf(void *param);
 void *priority_Scheduling(void *param);
 
@@ -29,12 +29,12 @@ void readFile(const char *filename) {
         exit(1);
     }
 
-    // Countries Reading from file until 4 inputs are read
-    while(fscanf(fp, "%d %d %d %d", 
+    // Reading from file using while loop gathering info for each task and storing it in array of Tasks
+    while(fscanf(fp, "%d %d %d", 
         &tasks[numOfTasks].taskID, 
         &tasks[numOfTasks].burstTime, 
-        &tasks[numOfTasks].priority, 
-        &tasks[numOfTasks].arrivalTime) == 4) {
+        &tasks[numOfTasks].priority) == 3) {
+        tasks[numOfTasks].arrivalTime = 0; // Initializing arrival time to 0
         numOfTasks++;
     }
     fclose(fp);
@@ -77,9 +77,9 @@ void *fcfs(void *param) {
         turnaroundTime[i] = tasks[i].burstTime + waitingTime[i];
     }
 
-    //Printing the Gnatt Chard
+    //Printing the Gantt Chart
     printf("\n--- FCFS Scheduling ---\n");
-    printf("Gnatt Chart: ");
+    printf("Ganatt Chart: ");
 
     for(int i=0; i < numOfTasks; i++) {
         printf("[T%d]", tasks[i].taskID); //Printing for each task
@@ -95,7 +95,7 @@ void *fcfs(void *param) {
 
     //Calculating average waiting time/turnaround time and rounding
     printf("Average Waiting Time: %.2f\n", (float)totalWaiting/numOfTasks);
-    printf("Average Turnaround Time: %.2f\n", (float)totalTurnaround/numOfTasks);
+    printf("Average Turnaround Time: %.2f\n", (float)TotalTurnaroundTime/numOfTasks);
     pthread_exit(0);
 }
 
@@ -133,9 +133,9 @@ void *sjf(void *param) {
         turnaroundTime[i] = sortedTasks[i].burstTime + waitingTime[i];
     }
 
-    //Printing the Gnatt Chart
-    printf("\n--- FCFS Scheduling ---\n");
-    printf("Gnatt Chart: ");
+    //Printing the Gantt Chart
+    printf("\n--- SJF Scheduling ---\n");
+    printf("Gantt Chart: ");
     for(int i=0; i < numOfTasks; i++) {
         printf("[T%d]", sortedTasks[i].taskID); //Printing for each task
     }
@@ -186,7 +186,7 @@ void *priority_Scheduling(void *param) {
     }
 
     printf("\n--- Priority Scheduling ---\n");
-    printf("Gnatt Chart: ");
+    printf("Gantt Chart: ");
 
 
     //Running till all tasks are completed
@@ -205,7 +205,7 @@ void *priority_Scheduling(void *param) {
             }
         }
 
-        /
+        
         //If we have a current task to execute
         if(current != -1) {
             //Executing the selected task
